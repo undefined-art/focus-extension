@@ -1,74 +1,64 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const blockerEnabled = await getBlockerEnabled();
+document.addEventListener("DOMContentLoaded", () => {
+  const toggleBlocking = document.getElementById("toggleBlocking");
+  const newDomainInput = document.getElementById("newDomain");
+  const addDomainButton = document.getElementById("addDomain");
+  const blockedDomainsList = document.getElementById("blockedDomains");
 
-  document.getElementById("blockerToggle").checked = blockerEnabled;
-  loadDomains();
-  document.getElementById("addDomain").addEventListener("click", addDomain);
-
-  document.getElementById("newDomain").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      addDomain();
-    }
+  chrome.storage.sync.get(["isEnabled", "blockedDomains"], (result) => {
+    toggleBlocking.checked = result.isEnabled ?? true;
+    updateBlockedDomainsList(result.blockedDomains || []);
   });
 
-  document
-    .getElementById("blockerToggle")
-    .addEventListener("change", async (e) => {
-      await setBlockerEnabled(e.target.checked);
+  toggleBlocking.addEventListener("change", () => {
+    chrome.storage.sync.set({ isEnabled: toggleBlocking.checked });
+  });
+
+  function addDomain() {
+    const domain = newDomainInput.value.trim().toLowerCase();
+
+    if (!domain) return;
+
+    chrome.storage.sync.get(["blockedDomains"], (result) => {
+      const blockedDomains = result.blockedDomains || [];
+
+      if (!blockedDomains.includes(domain)) {
+        blockedDomains.push(domain);
+
+        chrome.storage.sync.set({ blockedDomains }, () => {
+          updateBlockedDomainsList(blockedDomains);
+          newDomainInput.value = "";
+        });
+      }
     });
-});
+  }
 
-const loadDomains = async () => {
-  const domains = await getAllowedDomains();
-  displayDomains(domains);
-};
+  addDomainButton.addEventListener("click", addDomain);
 
-const displayDomains = async (domains) => {
-  const domainsList = document.getElementById("domainsList");
-  domainsList.innerHTML = "";
-
-  domains.forEach((domain) => {
-    const li = document.createElement("li");
-    li.className = "domain-item";
-
-    const domainText = document.createElement("span");
-    domainText.textContent = domain;
-
-    const removeButton = document.createElement("button");
-    removeButton.className = "remove-btn";
-    removeButton.textContent = "Remove";
-    removeButton.onclick = () => removeDomain(domain);
-
-    li.appendChild(domainText);
-    li.appendChild(removeButton);
-    domainsList.appendChild(li);
+  newDomainInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") addDomain();
   });
-};
 
-const addDomain = async () => {
-  const input = document.getElementById("newDomain");
-  const domain = input.value.trim().toLowerCase();
+  // Update blocked domains list
+  function updateBlockedDomainsList(domains) {
+    blockedDomainsList.innerHTML = "";
 
-  if (!domain) return;
+    domains.forEach((domain) => {
+      const li = document.createElement("li");
+      li.textContent = domain;
 
-  if (!isValidDomain(domain)) {
-    alert("Please enter a valid domain");
-    return;
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "delete-button";
+      deleteButton.innerHTML = '<span class="material-icons">delete</span>';
+
+      deleteButton.addEventListener("click", () => {
+        const updatedDomains = domains.filter((d) => d !== domain);
+        chrome.storage.sync.set({ blockedDomains: updatedDomains }, () => {
+          updateBlockedDomainsList(updatedDomains);
+        });
+      });
+
+      li.appendChild(deleteButton);
+      blockedDomainsList.appendChild(li);
+    });
   }
-
-  const domains = await getAllowedDomains();
-
-  if (!domains.includes(domain)) {
-    domains.push(domain);
-    await saveAllowedDomains(domains);
-    displayDomains(domains);
-    input.value = "";
-  }
-};
-
-const removeDomain = async (domainToRemove) => {
-  const domains = await getAllowedDomains();
-  const updatedDomains = domains.filter((domain) => domain !== domainToRemove);
-  await saveAllowedDomains(updatedDomains);
-  displayDomains(updatedDomains);
-};
+});

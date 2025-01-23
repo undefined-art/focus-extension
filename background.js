@@ -1,23 +1,48 @@
-importScripts("utils/storage.js", "utils/domainUtils.js");
+function isBlockedURL(url, blockedDomains) {
+  try {
+    const urlObj = new URL(url);
 
-chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+    return blockedDomains.some((domain) => {
+      const hostname = urlObj.hostname.toLowerCase();
+      const blockedDomain = domain.toLowerCase();
+
+      return (
+        hostname === blockedDomain || hostname.endsWith("." + blockedDomain)
+      );
+    });
+  } catch {
+    return false;
+  }
+}
+
+chrome.webNavigation.onBeforeNavigate.addListener((details) => {
   if (details.frameId !== 0) return;
 
-  const isEnabled = await getBlockerEnabled();
+  chrome.storage.sync.get(["isEnabled", "blockedDomains"], (result) => {
+    const { isEnabled = true, blockedDomains = [] } = result;
 
-  console.log({ isEnabled });
-  if (!isEnabled) return;
+    if (isEnabled && isBlockedURL(details.url, blockedDomains)) {
+      chrome.tabs.update(details.tabId, {
+        url:
+          chrome.runtime.getURL("blocked.html") +
+          `?url=${encodeURIComponent(details.url)}`,
+      });
+    }
+  });
+});
 
-  const url = new URL(details.url);
-  const domain = url.hostname.toLowerCase();
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.url) {
+    chrome.storage.sync.get(["isEnabled", "blockedDomains"], (result) => {
+      const { isEnabled = true, blockedDomains = [] } = result;
 
-  if (url.protocol === "chrome:" || url.protocol === "extension:") return;
-
-  const allowedDomains = await getAllowedDomains();
-
-  if (!isDomainAllowed(domain, allowedDomains)) {
-    chrome.tabs.update(details.tabId, {
-      url: `blocked.html?blocked=${encodeURIComponent(details.url)}`,
+      if (isEnabled && isBlockedURL(changeInfo.url, blockedDomains)) {
+        chrome.tabs.update(tabId, {
+          url:
+            chrome.runtime.getURL("blocked.html") +
+            `?url=${encodeURIComponent(changeInfo.url)}`,
+        });
+      }
     });
   }
 });

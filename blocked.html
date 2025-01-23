@@ -1,16 +1,136 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Access Blocked</title>
-    <link rel="stylesheet" href="blocked.css" />
+    <title>Site Blocked - LeetFocus</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="themes.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 40px;
+        font-family: "Roboto", sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .container {
+        background-color: var(--container-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px var(--shadow-color);
+        padding: 32px;
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+      }
+
+      h1 {
+        color: var(--primary-color);
+        font-size: 28px;
+        margin: 0 0 16px 0;
+      }
+
+      .blocked-url {
+        background-color: var(--card-bg);
+        padding: 12px;
+        border-radius: 4px;
+        margin: 16px 0;
+        word-break: break-all;
+        color: var(--error-color);
+      }
+
+      .quote {
+        margin: 24px 0;
+        font-style: italic;
+        color: var(--quote-color);
+      }
+
+      .quote-author {
+        margin-top: 8px;
+        font-weight: 500;
+        color: var(--text-color);
+      }
+
+      .leetcode-suggestion {
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .leetcode-suggestion h2 {
+        font-size: 20px;
+        color: var(--text-color);
+        margin: 0 0 16px 0;
+      }
+
+      .problem-card {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: left;
+      }
+
+      #problemTitle {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text-color);
+        margin-bottom: 8px;
+      }
+
+      #problemDifficulty {
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+
+      .solve-button {
+        display: inline-block;
+        background-color: var(--primary-color);
+        color: var(--text-color);
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+      }
+
+      .solve-button:hover {
+        background-color: var(--primary-hover);
+      }
+    </style>
   </head>
   <body>
     <div class="container">
-      <h1>Access Denied</h1>
-      <p>This domain is not in your allowed list.</p>
+      <h1>Site Blocked</h1>
+      <p>This site has been blocked to help you stay focused.</p>
       <div class="blocked-url" id="blockedUrl"></div>
-      <button id="goBackButton">Go Back</button>
+      <div class="quote">
+        <p id="quoteText"></p>
+        <p class="quote-author" id="quoteAuthor"></p>
+      </div>
+
+      <div class="leetcode-suggestion">
+        <h2>Why not solve a LeetCode problem instead?</h2>
+        <div class="problem-card">
+          <div id="problemTitle"></div>
+          <div id="problemDifficulty"></div>
+          <a
+            id="problemLink"
+            class="solve-button"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Solve Now</a
+          >
+        </div>
+      </div>
     </div>
-    <script src="blockedPage.js"></script>
+    <script src="theme.js"></script>
+    <script src="blocked.js"></script>
   </body>
 </html>
